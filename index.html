@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GAMES — моя коллекция</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;
+      --panel: #111114;
+      --panel-2: #18181b;
+      --border: #1f1f24;
+      --border-hover: #2d2d33;
+      --accent: #a3e635;
+      --accent-dim: #65a30d;
+      --text: #e4e4e7;
+      --muted: #71717a;
+    }
+    html, body { background: var(--bg); }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text);
+    }
+    .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .panel { background: var(--panel); border: 1px solid var(--border); }
+    .panel-2 { background: var(--panel-2); border: 1px solid var(--border); }
+    .panel-hover { transition: border-color .15s, transform .15s; }
+    .panel-hover:hover { border-color: var(--border-hover); }
+    .accent { color: var(--accent); }
+    .bg-accent { background: var(--accent); color: #0a0a0a; }
+    .bg-accent:hover { background: #bef264; }
+    .tab-active   { background: var(--panel-2); color: #fafafa; }
+    .tab-inactive { background: transparent; color: var(--muted); }
+    .tab-inactive:hover { color: #d4d4d8; background: rgba(255,255,255,.02); }
+    .chip { background: var(--panel-2); border: 1px solid #27272a; }
+    .input { background: var(--panel-2); border: 1px solid #27272a; color: #fafafa; }
+    .input:focus { border-color: var(--accent); outline: none; }
+    .dot { width: 6px; height: 6px; border-radius: 999px; display: inline-block; }
+    .cover-bg { background: linear-gradient(135deg, #1c1c20, #111114); }
+    .grain::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+      background-image: radial-gradient(circle at 20% 0%, rgba(163,230,53,.04), transparent 40%),
+                        radial-gradient(circle at 90% 100%, rgba(6,182,212,.03), transparent 40%);
+    }
+    select.input { appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2371717a' d='M0 0l5 6 5-6z'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; }
+    .st-passed  { color: #a3e635; }   .bg-st-passed  { background: #a3e635; }
+    .st-playing { color: #22d3ee; }   .bg-st-playing { background: #22d3ee; }
+    .st-dropped { color: #71717a; }   .bg-st-dropped { background: #71717a; }
+    .st-planned { color: #f59e0b; }   .bg-st-planned { background: #f59e0b; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .scroll-x { scroll-snap-type: x mandatory; }
+    .scroll-x > * { scroll-snap-align: start; }
+    .scroll-x::-webkit-scrollbar { height: 4px; }
+    .scroll-x::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+    .modal-scroll::-webkit-scrollbar { width: 6px; }
+    .modal-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+    .section-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
+    .badge { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 11px; color: var(--muted); }
+    .badge.earned { color: var(--accent); border-color: rgba(163,230,53,.3); background: rgba(163,230,53,.06); }
+    .heatmap-cell { width: 100%; aspect-ratio: 1; border-radius: 2px; background: #1a1a1d; }
+    .heatmap-cell[data-level="1"] { background: rgba(163,230,53,.15); }
+    .heatmap-cell[data-level="2"] { background: rgba(163,230,53,.35); }
+    .heatmap-cell[data-level="3"] { background: rgba(163,230,53,.6); }
+    .heatmap-cell[data-level="4"] { background: rgba(163,230,53,.9); }
+  </style>
+</head>
+<body class="grain min-h-screen relative">
+  <div class="max-w-6xl mx-auto px-5 pt-8 pb-24 relative" style="z-index:2">
+
+    <!-- Header -->
+    <header class="flex items-end justify-between mb-8 flex-wrap gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="dot bg-accent"></span>
+          <span class="section-label">games · personal log</span>
+        </div>
+        <h1 class="font-mono text-3xl font-bold tracking-tight">Моя коллекция</h1>
+        <div id="stats-line" class="text-sm text-zinc-500 mt-1 font-mono"></div>
+      </div>
+      <div class="flex items-center gap-1 panel rounded-lg p-1 flex-wrap">
+        <button class="nav-btn tab-active px-4 py-1.5 rounded-md text-sm transition" data-view="library">Коллекция</button>
+        <button class="nav-btn tab-inactive px-4 py-1.5 rounded-md text-sm transition" data-view="collections">Подборки</button>
+        <button class="nav-btn tab-inactive px-4 py-1.5 rounded-md text-sm transition" data-view="discover">Открытия</button>
+        <button class="nav-btn tab-inactive px-4 py-1.5 rounded-md text-sm transition" data-view="profile">Профиль</button>
+        <div class="w-px h-5 bg-zinc-800 mx-1"></div>
+        <button id="add-btn" class="bg-accent px-3 py-1.5 rounded-md text-sm font-medium transition" title="Добавить игру">＋</button>
+        <button id="settings-btn" class="tab-inactive px-3 py-1.5 rounded-md text-sm transition" title="Настройки">⚙</button>
+      </div>
+    </header>
+
+    <!-- Settings -->
+    <div id="settings-panel" class="hidden panel rounded-xl p-5 mb-6">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="dot bg-accent"></span>
+        <span class="section-label">setup · api</span>
+      </div>
+      <div class="font-medium mb-1 text-zinc-100">Ключ RAWG.io</div>
+      <div class="text-sm text-zinc-500 mb-4">
+        Бесплатно, ~1 минута. Открой <a href="https://rawg.io/apidocs" target="_blank" class="accent hover:underline">rawg.io/apidocs</a>, войди через Google, скопируй ключ со страницы.
+      </div>
+      <div class="flex gap-2">
+        <input id="api-key-input" type="text" placeholder="вставь сюда ключ..." class="input flex-1 rounded-md px-3 py-2 font-mono text-sm">
+        <button id="api-key-save" class="bg-accent rounded-md px-5 py-2 font-medium text-sm transition">Сохранить</button>
+      </div>
+      <div id="api-key-status" class="text-xs mt-3 font-mono"></div>
+    </div>
+
+    <!-- VIEW: LIBRARY -->
+    <section id="view-library">
+      <div class="flex flex-wrap items-center gap-2 mb-6">
+        <select id="filter-status" class="input rounded-md px-3 py-1.5 text-sm">
+          <option value="">Все статусы</option>
+          <option value="passed">Пройдено</option>
+          <option value="playing">Играю</option>
+          <option value="dropped">Брошено</option>
+          <option value="planned">В планах</option>
+        </select>
+        <div class="chip rounded-md px-3 py-1.5 text-sm flex items-center gap-2">
+          <span class="text-zinc-500">Оценка ≥</span>
+          <input type="number" id="filter-min-rating" min="1" max="10" placeholder="—"
+                 class="w-10 bg-transparent text-center font-mono outline-none">
+        </div>
+        <select id="sort" class="input rounded-md px-3 py-1.5 text-sm">
+          <option value="manual">Свой порядок</option>
+          <option value="date-desc">Новые сверху</option>
+          <option value="rating-desc">По оценке ↓</option>
+          <option value="rating-asc">По оценке ↑</option>
+          <option value="passed-desc">По дате прохождения ↓</option>
+          <option value="name">По названию</option>
+        </select>
+        <span id="library-counter" class="text-xs text-zinc-500 ml-auto font-mono"></span>
+      </div>
+
+      <div id="library-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+
+      <div id="library-empty" class="hidden text-center py-20">
+        <div class="font-mono text-zinc-700 text-6xl mb-3 tracking-tighter">∅</div>
+        <div class="section-label mb-2">empty library</div>
+        <div class="text-zinc-400">Нажми «＋» сверху и найди первую игру</div>
+      </div>
+    </section>
+
+    <!-- VIEW: COLLECTIONS -->
+    <section id="view-collections" class="hidden">
+      <div class="mb-8">
+        <div class="section-label mb-3">умные подборки</div>
+        <div id="smart-collections" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <div class="section-label">мои подборки</div>
+          <button id="create-collection-btn" class="text-xs accent hover:underline font-mono">＋ новая подборка</button>
+        </div>
+        <div id="user-collections" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        <div id="user-collections-empty" class="hidden text-sm text-zinc-500 py-6">
+          Своих подборок пока нет. Создай первую — например, «Любимые RPG» или «Хочу пройти в 2026».
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: COLLECTION DETAIL (single collection) -->
+    <section id="view-collection-detail" class="hidden">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div>
+          <button id="back-to-collections" class="text-xs text-zinc-500 hover:accent transition font-mono mb-1">← подборки</button>
+          <h2 id="collection-detail-title" class="font-mono text-2xl font-bold"></h2>
+          <div id="collection-detail-meta" class="text-sm text-zinc-500 mt-1 font-mono"></div>
+        </div>
+        <div id="collection-detail-actions" class="flex gap-2"></div>
+      </div>
+      <div id="collection-detail-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+      <div id="collection-detail-empty" class="hidden text-center py-20 text-zinc-500">Пусто. Добавь игры через ⋯ на карточке игры.</div>
+    </section>
+
+    <!-- VIEW: DISCOVER -->
+    <section id="view-discover" class="hidden space-y-10">
+      <div>
+        <div class="flex items-baseline justify-between mb-3">
+          <div>
+            <div class="section-label">в тренде</div>
+            <h2 class="font-mono text-xl font-bold">Что играют прямо сейчас</h2>
+          </div>
+        </div>
+        <div id="discover-trending" class="flex gap-3 overflow-x-auto pb-2 scroll-x"></div>
+      </div>
+      <div>
+        <div class="flex items-baseline justify-between mb-3">
+          <div>
+            <div class="section-label">скоро выйдет</div>
+            <h2 class="font-mono text-xl font-bold">Календарь релизов</h2>
+          </div>
+        </div>
+        <div id="discover-upcoming" class="flex gap-3 overflow-x-auto pb-2 scroll-x"></div>
+      </div>
+      <div>
+        <div class="flex items-baseline justify-between mb-3">
+          <div>
+            <div class="section-label">персонально</div>
+            <h2 class="font-mono text-xl font-bold">Похоже на твои любимые</h2>
+          </div>
+        </div>
+        <div id="discover-recommend" class="flex gap-3 overflow-x-auto pb-2 scroll-x"></div>
+        <div id="discover-recommend-hint" class="hidden text-sm text-zinc-500 mt-2">Оцени хотя бы 1 игру на 8+, и здесь появятся рекомендации.</div>
+      </div>
+    </section>
+
+    <!-- VIEW: PROFILE -->
+    <section id="view-profile" class="hidden">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div class="panel rounded-lg p-4">
+          <div class="section-label mb-2">всего</div>
+          <div class="font-mono text-3xl font-bold" id="profile-total">0</div>
+        </div>
+        <div class="panel rounded-lg p-4">
+          <div class="section-label mb-2">пройдено</div>
+          <div class="font-mono text-3xl font-bold accent" id="profile-passed">0</div>
+        </div>
+        <div class="panel rounded-lg p-4">
+          <div class="section-label mb-2">средняя оценка</div>
+          <div class="font-mono text-3xl font-bold" id="profile-avg">—</div>
+        </div>
+        <div class="panel rounded-lg p-4">
+          <div class="section-label mb-2">в процессе</div>
+          <div class="font-mono text-3xl font-bold st-playing" id="profile-playing">0</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="panel rounded-xl p-5">
+          <div class="section-label mb-4">распределение оценок</div>
+          <div id="chart-ratings" class="h-32"></div>
+        </div>
+        <div class="panel rounded-xl p-5">
+          <div class="section-label mb-4">по статусам</div>
+          <div id="chart-statuses" class="flex items-center gap-6"></div>
+        </div>
+        <div class="panel rounded-xl p-5">
+          <div class="section-label mb-4">топ жанров</div>
+          <div id="chart-genres" class="space-y-2"></div>
+        </div>
+        <div class="panel rounded-xl p-5">
+          <div class="section-label mb-4">активность (по месяцам)</div>
+          <div id="chart-heatmap"></div>
+        </div>
+      </div>
+
+      <div class="panel rounded-xl p-5">
+        <div class="section-label mb-4">достижения</div>
+        <div id="achievements" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- SEARCH MODAL -->
+  <div id="modal-search" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-20">
+    <div class="panel rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div class="p-4 border-b border-zinc-800 flex items-center gap-3">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-500"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-input" placeholder="Witcher, Elden Ring, Hades..." class="flex-1 bg-transparent text-base outline-none">
+        <button id="modal-search-close" class="text-zinc-500 hover:text-zinc-100 text-sm">esc</button>
+      </div>
+      <div class="flex-1 overflow-y-auto modal-scroll p-4">
+        <div id="search-results" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        <div id="search-hint" class="text-center py-12 section-label">type to search</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="modal-edit" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="panel rounded-xl p-6 w-full max-w-md shadow-2xl">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="dot bg-accent"></span>
+        <span class="section-label" id="edit-mode">add · entry</span>
+      </div>
+      <h2 id="edit-title" class="text-lg font-semibold mb-5 text-zinc-100"></h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block section-label mb-2">Оценка</label>
+          <div class="flex items-center gap-3">
+            <input id="edit-rating" type="number" min="1" max="10" placeholder="—"
+                   class="input rounded-md px-3 py-2 w-20 font-mono text-center text-lg">
+            <span class="font-mono text-zinc-600">/ 10</span>
+          </div>
+        </div>
+        <div>
+          <label class="block section-label mb-2">Статус</label>
+          <div id="edit-status-group" class="grid grid-cols-2 gap-2">
+            <button data-st="passed"  class="chip rounded-md px-3 py-2 text-sm text-left transition"><span class="dot bg-st-passed mr-2"></span>Пройдено</button>
+            <button data-st="playing" class="chip rounded-md px-3 py-2 text-sm text-left transition"><span class="dot bg-st-playing mr-2"></span>Играю</button>
+            <button data-st="dropped" class="chip rounded-md px-3 py-2 text-sm text-left transition"><span class="dot bg-st-dropped mr-2"></span>Брошено</button>
+            <button data-st="planned" class="chip rounded-md px-3 py-2 text-sm text-left transition"><span class="dot bg-st-planned mr-2"></span>В планах</button>
+          </div>
+          <input type="hidden" id="edit-status" value="passed">
+        </div>
+        <div>
+          <label class="block section-label mb-2">Дата прохождения</label>
+          <input id="edit-passed-at" type="date"
+                 class="input rounded-md px-3 py-2 w-full font-mono text-sm">
+        </div>
+        <div>
+          <label class="block section-label mb-2">Заметка</label>
+          <textarea id="edit-note" rows="2" placeholder="..."
+                    class="input w-full rounded-md px-3 py-2 text-sm resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-6">
+        <button id="edit-cancel" class="flex-1 chip rounded-md px-4 py-2.5 text-sm transition hover:border-zinc-600">Отмена</button>
+        <button id="edit-save"   class="flex-1 bg-accent rounded-md px-4 py-2.5 text-sm font-medium transition">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div id="modal-detail" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto modal-scroll">
+    <div class="panel rounded-xl w-full max-w-3xl shadow-2xl my-auto">
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <!-- COLLECTION CREATE/EDIT MODAL -->
+  <div id="modal-collection" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="panel rounded-xl p-6 w-full max-w-md shadow-2xl">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="dot bg-accent"></span>
+        <span class="section-label" id="coll-mode">new · collection</span>
+      </div>
+      <h2 class="text-lg font-semibold mb-5">Подборка</h2>
+      <label class="block section-label mb-2">Название</label>
+      <input id="coll-name" type="text" placeholder="Любимые RPG..." class="input w-full rounded-md px-3 py-2 mb-4">
+      <label class="block section-label mb-2">Описание (опц.)</label>
+      <textarea id="coll-desc" rows="2" placeholder="..." class="input w-full rounded-md px-3 py-2 text-sm resize-none mb-6"></textarea>
+      <div class="flex gap-2">
+        <button id="coll-cancel" class="flex-1 chip rounded-md px-4 py-2.5 text-sm transition hover:border-zinc-600">Отмена</button>
+        <button id="coll-save"   class="flex-1 bg-accent rounded-md px-4 py-2.5 text-sm font-medium transition">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD TO COLLECTION MODAL -->
+  <div id="modal-add-to-coll" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="panel rounded-xl p-6 w-full max-w-md shadow-2xl">
+      <div class="section-label mb-1">add to · collection</div>
+      <h2 id="atc-title" class="text-lg font-semibold mb-4"></h2>
+      <div id="atc-list" class="space-y-2 max-h-80 overflow-y-auto modal-scroll mb-4"></div>
+      <div class="flex gap-2">
+        <button id="atc-close" class="flex-1 chip rounded-md px-4 py-2.5 text-sm transition hover:border-zinc-600">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Telegram Mini App SDK (no-op outside Telegram) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Drag & drop with touch support -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+  <!-- App config (fill in supabase URL + anon key before deploy) -->
+  <script src="config.js"></script>
+  <!-- Unified data layer: local (localStorage) ↔ tg (Supabase) -->
+  <script src="data.js"></script>
+  <!-- UI -->
+  <script src="app.js"></script>
+</body>
+</html>
